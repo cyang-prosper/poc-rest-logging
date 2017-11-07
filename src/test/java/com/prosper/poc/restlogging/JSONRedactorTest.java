@@ -13,28 +13,38 @@ public class JSONRedactorTest {
 	protected String json;
 	protected String json_compact;
 	protected String json_7_entries;
-	protected String json_7_entries__compact;
-	protected String json_70_entries__compact;
+	protected String json_7_entries_compact;
+	protected String json_70_entries_compact;
 	
 	@Before
 	public void setUp() throws Exception {
 		json = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData.json")));
 		json_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_compact.json")));
 		json_7_entries = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_7_entries.json")));
-		json_7_entries__compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_7_entries_compact.json")));
-		json_70_entries__compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_70_entries_compact.json")));
+		json_7_entries_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_7_entries_compact.json")));
+		json_70_entries_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_70_entries_compact.json")));
+	}
+	
+	
+	@Test
+	public void testRedactPropContainingName() {
+		String propName="project";
+		String redactedJson = JSONRedactor.redactPropsContainingName(json_compact, propName);
+		
 	}
 	
 	@Test
 	public void testRedactPropStartWithUnderscore() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json);
-		System.out.println(redactedJson);
+		assertThat(redactedJson).isNotNull();
+		validateRedactedJSON(redactedJson);
 	}
 	
 	@Test
 	public void testRedactPropStartWithUnderscore_InCompactJSON() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_compact);
-		System.out.println(redactedJson);
+		assertThat(redactedJson).isNotNull();
+		validateRedactedJSON(redactedJson);
 	}
 	
 	@Test
@@ -44,17 +54,16 @@ public class JSONRedactorTest {
 		validateRedactedJSON(redactedJson);
 	}
 	
-	
 	@Test
 	public void testRedactPropStartWithUnderscore_LargeCompactJSON() {
-		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_7_entries__compact);
+		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_7_entries_compact);
 		assertThat(redactedJson).isNotNull();
 		validateRedactedJSON(redactedJson);
 	}
 	
 	@Test
 	public void testRedactPropStartWithUnderscore_70EntriesCompactJSON() {
-		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_70_entries__compact);
+		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_70_entries_compact);
 		assertThat(redactedJson).isNotNull();
 		validateRedactedJSON(redactedJson);
 	}

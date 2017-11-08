@@ -10,7 +10,7 @@ public class JSONRedactor {
 	
 	private static Logger logger = LoggerFactory.getLogger(JSONRedactor.class);
 	
-	public static final String REDACTED_NUMBER_VALUE = "_redacted_";
+	public static final String REDACTED_NUMERIC_VALUE = "_redacted_";
 	public static final String REDACTED_STRING_VALUE = "\"_redacted_\"";
 	
 	// A numeric value in JSON e.g. -2.12e10
@@ -27,15 +27,70 @@ public class JSONRedactor {
     
 	// A property name template e.g. "{PROP_NAME}":
 	// Just replace {PROP_NAME} with an actual property name
-	private static final String REGEX_FOR_PROP_NAME = "(\"[^\"]*{PROP_NAME}[^\"]*\")(\\s*:\\s*)";
+	private static final String REGEX_PROP_NAME_CONTAINING = "(\"[^\"]*{PROP_NAME}[^\"]*\")(\\s*:\\s*)";
+	private static final String REGEX_PROP_NAME_STARTS_WITH = "(\"{PROP_NAME}[^\"]*\")(\\s*:\\s*)";
+	private static final String REGEX_PROP_NAME_ENDS_WITH = "(\"[^\"]*{PROP_NAME}\")(\\s*:\\s*)";
 	
 	
-	public static String redactPropsContainingName(String json, String propName) {
-		if(json==null) {
-			return null;
+	/**
+	 * Redact all properties with name comtaining a certain phrase
+	 * 
+	 * @param json
+	 * @param propName
+	 * @return
+	 */
+	public static String redactPropsWithNameContaining(String json, String propName) {
+		if(json == null || propName == null || propName.trim().length() == 0) {
+			return json;
 		}
-		
-		String regex = REGEX_FOR_PROP_NAME.replace("{PROP_NAME}", propName);
+
+		String regex = REGEX_PROP_NAME_CONTAINING.replace("{PROP_NAME}", propName);
+		return redactPropsWithName(json, regex);
+	}
+	
+	
+	/**
+	 * Redact all properties with name starts with a certain phrase
+	 * 
+	 * @param json
+	 * @param propName
+	 * @return
+	 */
+	public static String redactPropsWithNameStartsWith(String json, String propName) {
+		if(json == null || propName == null || propName.trim().length() == 0) {
+			return json;
+		}
+
+		String regex = REGEX_PROP_NAME_STARTS_WITH.replace("{PROP_NAME}", propName);
+		return redactPropsWithName(json, regex);
+	}
+
+	
+	/**
+	 * Redact all properties with name starts with a certain phrase
+	 * 
+	 * @param json
+	 * @param propName
+	 * @return
+	 */
+	public static String redactPropsWithNameEndsWith(String json, String propName) {
+		if(json == null || propName == null || propName.trim().length() == 0) {
+			return json;
+		}
+
+		String regex = REGEX_PROP_NAME_ENDS_WITH.replace("{PROP_NAME}", propName);
+		return redactPropsWithName(json, regex);
+	}
+	
+
+	/**
+	 * Redact all properties with name matching the regex
+	 * 
+	 * @param json
+	 * @param regex
+	 * @return
+	 */
+	private static String redactPropsWithName(String json, String regex) {
 		Pattern numericPropPattern = Pattern.compile(regex+NUMERIC_VALUE_PATTERN);
 		Pattern stringPropPattern = Pattern.compile(regex+STRING_VALUE_PATTERN);
 		
@@ -84,10 +139,10 @@ public class JSONRedactor {
         		json = json.substring(0, matcher.start()+offset)+
         				matcher.group(1)+
         				matcher.group(2)+
-        				REDACTED_NUMBER_VALUE+
+        				REDACTED_NUMERIC_VALUE+
         				matcher.group(4)+
         				json.substring(matcher.end()+offset);
-        		offset += REDACTED_NUMBER_VALUE.length()-matcher.group(3).length();
+        		offset += REDACTED_NUMERIC_VALUE.length()-matcher.group(3).length();
         }
         return json;
 	}

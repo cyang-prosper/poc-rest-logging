@@ -4,22 +4,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class JSONRedactorTest {
-
-	protected String json;
-	protected String json_compact;
+	
+	// List of properties to redact and their types
+	@SuppressWarnings("serial")
+	private static final Map<String, Class<?>> propNamesContaining = new HashMap<String, Class<?>>() {{
+		put("email", String.class);
+		put("latitude", Number.class);
+	}};
+	
+	
+	@SuppressWarnings("serial")
+	private static final Map<String, Class<?>> propNamesStartWith = new HashMap<String, Class<?>>() {{
+		put("eye", String.class);
+		put("lat", Number.class);
+	}};
+	
+	
 	protected String json_7_entries;
 	protected String json_7_entries_compact;
 	protected String json_70_entries_compact;
 	
+	
 	@Before
 	public void setUp() throws Exception {
-		json = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData.json")));
-		json_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_compact.json")));
 		json_7_entries = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_7_entries.json")));
 		json_7_entries_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_7_entries_compact.json")));
 		json_70_entries_compact = new String(Files.readAllBytes(Paths.get("./src/test/resources/testData_70_entries_compact.json")));
@@ -27,52 +41,135 @@ public class JSONRedactorTest {
 	
 	
 	@Test
-	public void testRedactPropContainingName() {
-		String propName="project";
-		String redactedJson = JSONRedactor.redactPropsContainingName(json_compact, propName);
+	public void testRedactPropContainingName_7EntriesJSON() {
+		String redactedJson = json_7_entries;
 		
+		for(String propName: propNamesContaining.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
+		}
+		
+		validateRedactPropContainingName(redactedJson);
 	}
 	
-	@Test
-	public void testRedactPropStartWithUnderscore() {
-		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json);
-		assertThat(redactedJson).isNotNull();
-		validateRedactedJSON(redactedJson);
-	}
 	
 	@Test
-	public void testRedactPropStartWithUnderscore_InCompactJSON() {
-		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_compact);
-		assertThat(redactedJson).isNotNull();
-		validateRedactedJSON(redactedJson);
+	public void testRedactPropContainingName_7EntriesCompactJSON() {
+		String redactedJson = json_7_entries_compact;
+		
+		for(String propName: propNamesContaining.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
+		}
+		
+		validateRedactPropContainingName(redactedJson);
 	}
 	
+	
 	@Test
-	public void testRedactPropStartWithUnderscore_LargeJSON() {
+	public void testRedactPropContainingName_70EntriesCompactJSON() {
+		String redactedJson = json_70_entries_compact;
+		
+		for(String propName: propNamesContaining.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
+		}
+		
+		validateRedactPropContainingName(redactedJson);
+	}
+
+	
+	private void validateRedactPropContainingName(String redactedJson) {
+		// Verify the redacted results
+		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
+		
+		for(String propName: propNamesContaining.keySet()) {
+			String redactedStringRegex = "\""+propName+"\"\\s*:\\s*"+ (propNamesContaining.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
+			int numOfProp = redactedJson.split(redactedStringRegex, -1).length-1;
+			assertThat(numOfProp).isEqualTo(numOfGUID);	
+		}
+	}
+	
+
+	@Test
+	public void testRedactPropsStartWithName_7EntriesJSON() {
+		String redactedJson = json_7_entries;
+		
+		for(String propName: propNamesStartWith.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameStartsWith(redactedJson, propName);
+		}
+		
+		validateRedactPropsStartWithName(redactedJson);
+	}
+	
+	
+	@Test
+	public void testRedactPropsStartWithName_7EntriesCompactJSON() {
+		String redactedJson = json_7_entries_compact;
+		
+		for(String propName: propNamesStartWith.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
+		}
+		
+		validateRedactPropsStartWithName(redactedJson);
+	}
+	
+	
+	@Test
+	public void testRedactPropsStartWithName_70EntriesCompactJSON() {
+		String redactedJson = json_70_entries_compact;
+		
+		for(String propName: propNamesStartWith.keySet()) {
+			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
+		}
+		
+		validateRedactPropsStartWithName(redactedJson);
+	}
+
+	
+	private void validateRedactPropsStartWithName(String redactedJson) {
+		// Verify the redacted results
+		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
+		
+		for(String propName: propNamesStartWith.keySet()) {
+			String redactedStringRegex = "\""+propName+"[^\"]*\"\\s*:\\s*"+ (propNamesContaining.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
+			int numOfProp = redactedJson.split(redactedStringRegex, -1).length-1;
+			assertThat(numOfProp).isEqualTo(numOfGUID);	
+		}
+	}
+	
+	
+	@Test
+	public void testRedactPropsStartWithUnderscore_7EntriesJSON() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_7_entries);
 		assertThat(redactedJson).isNotNull();
-		validateRedactedJSON(redactedJson);
+		validateRedactedPropsStartWithUnderscore(redactedJson);
 	}
 	
 	@Test
-	public void testRedactPropStartWithUnderscore_LargeCompactJSON() {
+	public void testRedactPropsStartWithUnderscore_7EntriesCompactJSON() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_7_entries_compact);
 		assertThat(redactedJson).isNotNull();
-		validateRedactedJSON(redactedJson);
+		validateRedactedPropsStartWithUnderscore(redactedJson);
 	}
 	
 	@Test
-	public void testRedactPropStartWithUnderscore_70EntriesCompactJSON() {
+	public void testRedactPropsStartWithUnderscore_70EntriesCompactJSON() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_70_entries_compact);
 		assertThat(redactedJson).isNotNull();
-		validateRedactedJSON(redactedJson);
+		validateRedactedPropsStartWithUnderscore(redactedJson);
 	}
-	protected void validateRedactedJSON(String redactedJson) {
-		
-		// Make sure there are as many "guid" as there are "_ssn":"_redacted"
+	
+	
+	protected void validateRedactedPropsStartWithUnderscore(String redactedJson) {
 		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
+		
+		// Make sure there are as many "guid" as there are "_ssn":"_redacted_"
 		String redactedSSN = "\"_ssn\"\\s*:\\s*"+JSONRedactor.REDACTED_STRING_VALUE;
 		int numOfSSN = redactedJson.split(redactedSSN, -1).length-1;
 		assertThat(numOfSSN).isEqualTo(numOfGUID);
+		
+		// Make sure there are as many "guid" as there are "_age":"_redacted"
+		String redactedAge = "\"_age\"\\s*:\\s*"+JSONRedactor.REDACTED_NUMERIC_VALUE;
+		int numOfAge = redactedJson.split(redactedAge, -1).length-1;
+		assertThat(numOfAge).isEqualTo(numOfGUID);
 	}
+	
 }

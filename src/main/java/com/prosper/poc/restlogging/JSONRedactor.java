@@ -30,10 +30,11 @@ public class JSONRedactor {
 	private static final String REGEX_PROP_NAME_CONTAINING = "(\"[^\"]*{PROP_NAME}[^\"]*\")(\\s*:\\s*)";
 	private static final String REGEX_PROP_NAME_STARTS_WITH = "(\"{PROP_NAME}[^\"]*\")(\\s*:\\s*)";
 	private static final String REGEX_PROP_NAME_ENDS_WITH = "(\"[^\"]*{PROP_NAME}\")(\\s*:\\s*)";
+	private static final String REGEX_PROP_NAME_EXACT_MATCH = "(\"{PROP_NAME}\")(\\s*:\\s*)";
 	
 	
 	/**
-	 * Redact all properties with name comtaining a certain phrase
+	 * Redact all property values with name comtaining a certain phrase
 	 * 
 	 * @param json
 	 * @param propName
@@ -45,12 +46,12 @@ public class JSONRedactor {
 		}
 
 		String regex = REGEX_PROP_NAME_CONTAINING.replace("{PROP_NAME}", propName);
-		return redactPropsWithName(json, regex);
+		return redactPropsWithNameRegex(json, regex);
 	}
 	
 	
 	/**
-	 * Redact all properties with name starts with a certain phrase
+	 * Redact all property values with name starts with a certain phrase
 	 * 
 	 * @param json
 	 * @param propName
@@ -62,12 +63,12 @@ public class JSONRedactor {
 		}
 
 		String regex = REGEX_PROP_NAME_STARTS_WITH.replace("{PROP_NAME}", propName);
-		return redactPropsWithName(json, regex);
+		return redactPropsWithNameRegex(json, regex);
 	}
 
 	
 	/**
-	 * Redact all properties with name starts with a certain phrase
+	 * Redact all property values with name starts with a certain phrase
 	 * 
 	 * @param json
 	 * @param propName
@@ -79,6 +80,23 @@ public class JSONRedactor {
 		}
 
 		String regex = REGEX_PROP_NAME_ENDS_WITH.replace("{PROP_NAME}", propName);
+		return redactPropsWithNameRegex(json, regex);
+	}
+	
+
+	/**
+	 * Redact all property values with name matching a certain string
+	 * 
+	 * @param json
+	 * @param propName
+	 * @return
+	 */
+	public static String redactPropsWithName(String json, String propName) {
+		if(json == null || propName == null || propName.trim().length() == 0) {
+			return json;
+		}
+
+		String regex = REGEX_PROP_NAME_EXACT_MATCH.replace("{PROP_NAME}", propName);
 		return redactPropsWithName(json, regex);
 	}
 	
@@ -90,7 +108,7 @@ public class JSONRedactor {
 	 * @param regex
 	 * @return
 	 */
-	private static String redactPropsWithName(String json, String regex) {
+	private static String redactPropsWithNameRegex(String json, String regex) {
 		Pattern numericPropPattern = Pattern.compile(regex+NUMERIC_VALUE_PATTERN);
 		Pattern stringPropPattern = Pattern.compile(regex+STRING_VALUE_PATTERN);
 		

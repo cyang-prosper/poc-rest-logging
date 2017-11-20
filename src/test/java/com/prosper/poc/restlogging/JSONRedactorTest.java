@@ -14,7 +14,7 @@ public class JSONRedactorTest {
 	
 	// List of properties to redact and their types
 	@SuppressWarnings("serial")
-	private static final Map<String, Class<?>> propNamesContaining = new HashMap<String, Class<?>>() {{
+	private static final Map<String, Class<?>> propNamesExactMatch = new HashMap<String, Class<?>>() {{
 		put("email", String.class);
 		put("latitude", Number.class);
 	}};
@@ -41,47 +41,47 @@ public class JSONRedactorTest {
 	
 	
 	@Test
-	public void testRedactPropContainingName_7EntriesJSON() {
+	public void testRedactPropMatchingName_7EntriesJSON() {
 		String redactedJson = json_7_entries;
 		
-		for(String propName: propNamesContaining.keySet()) {
+		for(String propName: propNamesExactMatch.keySet()) {
 			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
 		}
 		
-		validateRedactPropContainingName(redactedJson);
+		validateRedactPropMatchingName(redactedJson);
 	}
 	
 	
 	@Test
-	public void testRedactPropContainingName_7EntriesCompactJSON() {
+	public void testRedactPropMatchingName_7EntriesCompactJSON() {
 		String redactedJson = json_7_entries_compact;
 		
-		for(String propName: propNamesContaining.keySet()) {
+		for(String propName: propNamesExactMatch.keySet()) {
 			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
 		}
 		
-		validateRedactPropContainingName(redactedJson);
+		validateRedactPropMatchingName(redactedJson);
 	}
 	
 	
 	@Test
-	public void testRedactPropContainingName_70EntriesCompactJSON() {
+	public void testRedactPropMatchingName_70EntriesCompactJSON() {
 		String redactedJson = json_70_entries_compact;
 		
-		for(String propName: propNamesContaining.keySet()) {
+		for(String propName: propNamesExactMatch.keySet()) {
 			redactedJson = JSONRedactor.redactPropsWithNameContaining(redactedJson, propName);
 		}
 		
-		validateRedactPropContainingName(redactedJson);
+		validateRedactPropMatchingName(redactedJson);
 	}
 
 	
-	private void validateRedactPropContainingName(String redactedJson) {
+	private void validateRedactPropMatchingName(String redactedJson) {
 		// Verify the redacted results
 		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
 		
-		for(String propName: propNamesContaining.keySet()) {
-			String redactedStringRegex = "\""+propName+"\"\\s*:\\s*"+ (propNamesContaining.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
+		for(String propName: propNamesExactMatch.keySet()) {
+			String redactedStringRegex = "\""+propName+"\"\\s*:\\s*"+ (propNamesExactMatch.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
 			int numOfProp = redactedJson.split(redactedStringRegex, -1).length-1;
 			assertThat(numOfProp).isEqualTo(numOfGUID);	
 		}
@@ -129,13 +129,24 @@ public class JSONRedactorTest {
 		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
 		
 		for(String propName: propNamesStartWith.keySet()) {
-			String redactedStringRegex = "\""+propName+"[^\"]*\"\\s*:\\s*"+ (propNamesContaining.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
+			String redactedStringRegex = "\""+propName+"[^\"]*\"\\s*:\\s*"+ (propNamesStartWith.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
 			int numOfProp = redactedJson.split(redactedStringRegex, -1).length-1;
 			assertThat(numOfProp).isEqualTo(numOfGUID);	
 		}
 	}
 	
 	
+	private void validateRedactPropsExactMatch(String redactedJson) {
+		// Verify the redacted results
+		int numOfGUID = redactedJson.split("\"guid\"", -1).length-1;
+		
+		for(String propName: propNamesExactMatch.keySet()) {
+			String redactedStringRegex = "\""+propName+"[^\"]*\"\\s*:\\s*"+ (propNamesExactMatch.get(propName) == String.class? JSONRedactor.REDACTED_STRING_VALUE : JSONRedactor.REDACTED_NUMERIC_VALUE);
+			int numOfProp = redactedJson.split(redactedStringRegex, -1).length-1;
+			assertThat(numOfProp).isEqualTo(numOfGUID);	
+		}
+	}
+
 	@Test
 	public void testRedactPropsStartWithUnderscore_7EntriesJSON() {
 		String redactedJson = JSONRedactor.redactPropsStartWithUnderscore(json_7_entries);
